@@ -2578,6 +2578,15 @@ assertNoAdditions {
     };
   });
 
+  mesone-nvim = super.mesone-nvim.overrideAttrs {
+    dependencies = with self; [
+      plenary-nvim
+      nvim-dap
+      telescope-nvim
+      fidget-nvim
+    ];
+  };
+
   mini-nvim = super.mini-nvim.overrideAttrs {
     # reduce closure size
     postInstall = ''
@@ -3972,10 +3981,6 @@ assertNoAdditions {
       license = lib.licenses.asl20;
     };
   });
-
-  range-highlight-nvim = super.range-highlight-nvim.overrideAttrs {
-    dependencies = [ self.cmd-parser-nvim ];
-  };
 
   ranger-nvim = super.ranger-nvim.overrideAttrs {
     runtimeDeps = [

@@ -12,11 +12,12 @@
   automake,
   libtool,
   unzip,
+  fixDarwinDylibNames,
   nixosTests,
 }:
 stdenv.mkDerivation rec {
   pname = "curl-impersonate";
-  version = "2.1.0";
+  version = "2.1.1";
 
   outputs = [
     "out"
@@ -27,7 +28,7 @@ stdenv.mkDerivation rec {
     owner = "lexiforest";
     repo = "curl-impersonate";
     tag = "v${version}";
-    hash = "sha256-gN4TD+WxQM2eJofHsOHA/JpH6bQ8CI3VUTPL8NuySn4=";
+    hash = "sha256-AgC66L0z6cYVqePwc7yO1iO9F/6YD6dTqWKCcCrNLzc=";
   };
 
   separateDebugInfo = true;
@@ -47,6 +48,14 @@ stdenv.mkDerivation rec {
     automake
     libtool
     unzip
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    # Rewrite the dylib's install name to its absolute store path.
+    # Without this it keeps upstream's "@rpath/libcurl-impersonate.4.dylib",
+    # and every consumer linking it (e.g. python3Packages.curl-cffi's
+    # extension module, and through it yt-dlp) records an @rpath reference
+    # with no LC_RPATH set, failing at dlopen with "no LC_RPATH's found".
+    fixDarwinDylibNames
   ];
 
   # Upstream CMake build wants its own specific versions of
@@ -91,7 +100,7 @@ stdenv.mkDerivation rec {
   preConfigure = ''
     # Prebuild libidn2 (statically, with bundled libunistring) offline,
     # matching `make prepare-libidn2`.
-    BUILD_DIR="$PWD/build" ./scripts/build-libidn2.sh
+    BUILD_DIR="$PWD/build" ZIG_FLAGS='-target ${stdenv.hostPlatform.config}' ./scripts/build-libidn2.sh
   '';
 
   installPhase = ''

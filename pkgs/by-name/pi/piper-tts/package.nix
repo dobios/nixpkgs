@@ -10,13 +10,14 @@
   espeak-ng,
 
   # extras
-  withTrain ? true,
-  withHTTP ? true,
   withAlignment ? true,
+  withHTTP ? true,
+  withJapanese ? true,
+  withTrain ? true,
 }:
 
 let
-  # https://github.com/OHF-Voice/piper1-gpl/blob/v1.3.0/CMakeLists.txt#L33-L40
+  # https://github.com/OHF-Voice/piper1-gpl/blob/v1.7.0/CMakeLists.txt#L33-L40
   espeak-ng' = espeak-ng.override {
     asyncSupport = false;
     klattSupport = false;
@@ -29,14 +30,14 @@ in
 
 python3Packages.buildPythonApplication rec {
   pname = "piper-tts";
-  version = "1.4.2";
+  version = "1.7.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "OHF-Voice";
     repo = "piper1-gpl";
     tag = "v${version}";
-    hash = "sha256-FHO+1d1iJimc6KweY/O6lEvWqGCyUwnDrslEfkxYR7A=";
+    hash = "sha256-oQhDFhB2GXlAdxW1K7BM7RJkzihAwyoB6QbOpaMUVHM=";
   };
 
   patches = [
@@ -81,28 +82,39 @@ python3Packages.buildPythonApplication rec {
       onnxruntime
       pathvalidate
     ]
-    ++ lib.optionals withTrain optional-dependencies.train
+    ++ lib.optionals withAlignment optional-dependencies.alignment
     ++ lib.optionals withHTTP optional-dependencies.http
-    ++ lib.optionals withAlignment optional-dependencies.alignment;
+    ++ lib.optionals withJapanese optional-dependencies.ja
+    ++ lib.optionals withTrain optional-dependencies.train;
 
   optional-dependencies = {
+    alignment = with python3Packages; [
+      onnx
+    ];
+    http = with python3Packages; [
+      flask
+    ];
+    ja = with python3Packages; [
+      pyopenjtalk-plus
+    ];
     train =
       with python3Packages;
       [
         jsonargparse
         librosa
         lightning
+        onnx
         pysilero-vad
         tensorboard
         tensorboardx
         torch
       ]
       ++ jsonargparse.optional-dependencies.signatures;
-    http = with python3Packages; [
-      flask
-    ];
-    alignment = with python3Packages; [
-      onnx
+    zh = with python3Packages; [
+      # g2pw # not packaged
+      transformers
+      sentence-stream
+      unicode-rbnf
     ];
   };
 
@@ -114,6 +126,14 @@ python3Packages.buildPythonApplication rec {
     rm -v src/piper/train/vits/monotonic_align/{Makefile,setup.py,core.c,core.pyx}
     cp -Rv src/piper/train/vits $train/
   '';
+
+  pythonImportsCheck = [
+    "piper"
+    "piper.tashkeel"
+    "piper.hebrew"
+    "piper.train"
+    "piper.train.vits"
+  ];
 
   meta = {
     changelog = "https://github.com/OHF-Voice/piper1-gpl/releases/tag/v${version}";
