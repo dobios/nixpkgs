@@ -8,7 +8,7 @@
 }:
 
 stdenv.mkDerivation rec {
-  pname = "firrtl2";
+  pname = "firrtl";
   version = "6.0.0";
   scalaVersion = "2.13";
 

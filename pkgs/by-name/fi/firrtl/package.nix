@@ -8,7 +8,7 @@
 }:
 
 stdenv.mkDerivation rec {
-  pname = "firrtl";
+  pname = "firrtl1";
   version = "1.5.3";
   scalaVersion = "2.13"; # pin, for determinism
 
